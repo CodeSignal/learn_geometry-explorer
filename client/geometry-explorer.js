@@ -116,9 +116,9 @@ function unitsNoteText(units, mode) {
       : `1 ft = ${formatNumber(METERS_PER_FOOT)} m`;
 
   if (mode === '2d') {
-    return `Dimensions and lengths use ${labels.linear}; area uses ${labels.area}. Measurements also show ${altLabels.linear}/${altLabels.area} equivalents (${conversionNote}).`;
+    return `Lengths in ${labels.linear}; area in ${labels.area}. ≈ ${altLabels.linear}/${altLabels.area} (${conversionNote}).`;
   }
-  return `Dimensions use ${labels.linear}; surface area uses ${labels.area}; volume uses ${labels.volume}. Measurements also show ${altLabels.linear}/${altLabels.area}/${altLabels.volume} equivalents (${conversionNote}).`;
+  return `Lengths in ${labels.linear}; area in ${labels.area}; volume in ${labels.volume}. ≈ ${altLabels.linear}/${altLabels.area}/${altLabels.volume} (${conversionNote}).`;
 }
 
 function paramLabelWithUnits(label, units) {
@@ -931,6 +931,7 @@ async function initGeometryExplorer() {
     state.values = readValuesFromSliders();
     const computed = def.compute(state.values);
     const rows = def.metricRows(computed, state.units);
+    const showHints = runtimeConfig.ui?.showFormulaHints !== false;
     metricsList.innerHTML = rows
       .map(
         (row) => `<li class="geometry-metric-row">
@@ -941,7 +942,7 @@ async function initGeometryExplorer() {
             ${row.alternate ? `<span class="geometry-metric-alt">${row.alternate}</span>` : ''}
           </span>
         </div>
-        <p class="geometry-metric-hint">${row.hint}</p>
+        ${showHints ? `<p class="geometry-metric-hint">${row.hint}</p>` : ''}
       </li>`,
       )
       .join('');
@@ -995,6 +996,7 @@ async function initGeometryExplorer() {
     const def = getShapeDef();
     const rangesByKey = getSliderRanges();
     const lockedSliders = runtimeConfig.ui?.lockedSliders === true;
+    slidersRoot.classList.toggle('geometry-sliders--multi', def.keys.length >= 3);
 
     def.keys.forEach((key, index) => {
       const wrap = document.createElement('div');
