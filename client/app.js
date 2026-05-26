@@ -1,8 +1,5 @@
 // app.js
-import Modal from './design-system/components/modal/modal.js';
-
 let websocket = null;
-let helpModal = null;
 
 // Initialize WebSocket connection
 function initializeWebSocket() {
@@ -45,44 +42,8 @@ function initializeWebSocket() {
   }
 }
 
-// Load help content and initialize modal
-async function initializeHelpModal() {
-  try {
-    const response = await fetch('./help-content.html');
-    const helpContent = await response.text();
-
-    helpModal = Modal.createHelpModal({
-      title: 'Help / User Guide',
-      content: helpContent
-    });
-
-    const helpButton = document.getElementById('btn-help');
-    if (helpButton) {
-      helpButton.addEventListener('click', () => {
-        helpModal.open();
-      });
-    }
-  } catch (error) {
-    console.error('Failed to load help content:', error);
-    helpModal = Modal.createHelpModal({
-      title: 'Help / User Guide',
-      content: '<p>Help content could not be loaded. Please check that help-content.html exists.</p>'
-    });
-    const helpButton = document.getElementById('btn-help');
-    if (helpButton) {
-      helpButton.addEventListener('click', () => helpModal.open());
-    }
-  }
-}
-
-// Initialize both help modal and WebSocket when DOM is ready
-async function initialize() {
-  await initializeHelpModal();
-  initializeWebSocket();
-}
-
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initialize);
+  document.addEventListener('DOMContentLoaded', initializeWebSocket);
 } else {
-  initialize();
+  initializeWebSocket();
 }
