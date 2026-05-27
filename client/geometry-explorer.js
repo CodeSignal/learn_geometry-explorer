@@ -879,8 +879,26 @@ async function initGeometryExplorer() {
 
   function applyUiConfig() {
     const ui = runtimeConfig.ui || {};
-    modeSelect.disabled = ui.lockedMode === true;
-    shapeSelect.disabled = ui.lockedShape === true;
+    const modeField = document.getElementById('geometry-mode-field');
+    const shapeField = document.getElementById('geometry-shape-field');
+    const shapeHeading = document.getElementById('geometry-shape-heading');
+    const lockedMode = ui.lockedMode === true;
+    const lockedShape = ui.lockedShape === true;
+
+    if (modeField) {
+      modeField.hidden = lockedMode;
+    }
+    modeSelect.disabled = lockedMode;
+
+    if (shapeField) {
+      shapeField.hidden = lockedShape;
+    }
+    shapeSelect.disabled = lockedShape;
+
+    if (shapeHeading) {
+      shapeHeading.hidden = lockedMode && lockedShape;
+    }
+
     if (unitsSelect) {
       unitsSelect.disabled = ui.lockedUnits === true;
     }
