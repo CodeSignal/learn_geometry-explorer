@@ -494,6 +494,19 @@ function getGeometryShapeFillStyle() {
   return fill || '#dbeafe';
 }
 
+/**
+ * Build a canvas `ctx.font` string from design-system typography tokens so that
+ * text painted on the canvas stays in sync with typography.css. Canvas cannot
+ * use the CSS typography classes directly (it paints pixels, not DOM), so we
+ * read the same custom properties the classes are built from.
+ */
+function canvasFont(sizeVar, weight = 600) {
+  const rootStyle = getComputedStyle(document.documentElement);
+  const family = rootStyle.getPropertyValue('--body-family').trim() || 'Work Sans';
+  const size = rootStyle.getPropertyValue(sizeVar).trim() || '14px';
+  return `${weight} ${size} ${family}, sans-serif`;
+}
+
 const PRISM_FACE_FILL_VARS = {
   kMin: '--geometry-prism-face-fill-bottom',
   kMax: '--geometry-prism-face-fill-top',
@@ -692,7 +705,7 @@ function drawPrism(ctx, canvas, values, units, view3d) {
   const labelColor =
     getComputedStyle(document.documentElement).getPropertyValue('--Colors-Text-Body-Default') || '#334155';
   ctx.fillStyle = labelColor.trim() || '#334155';
-  ctx.font = '600 12px Work Sans, sans-serif';
+  ctx.font = canvasFont('--Fonts-Special-sm');
 
   const labelDefs = [
     { text: `ℓ=${formatDimensionLabel(L, units)}`, from: [0, 0, 0], to: [L, 0, 0], dx: 0, dy: 12, align: 'center', baseline: 'top' },
@@ -773,7 +786,7 @@ function draw2D(ctx, canvas, shapeKey, values, rangesByKey = {}, units = DEFAULT
     }
 
     ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--Colors-Text-Body-Default') || '#334155';
-    ctx.font = '600 14px Work Sans, sans-serif';
+    ctx.font = canvasFont('--Fonts-Body-Default-xs');
     ctx.fillText(`w = ${formatDimensionLabel(rw, units)}`, x0 + bw / 2 - 18, y0 - 10);
     ctx.fillText(`h = ${formatDimensionLabel(rh, units)}`, x0 + bw + 8, y0 + bh / 2);
   } else if (shapeKey === 'circle') {
@@ -790,7 +803,7 @@ function draw2D(ctx, canvas, shapeKey, values, rangesByKey = {}, units = DEFAULT
     ctx.lineTo(cx + rad, cy);
     ctx.stroke();
     ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--Colors-Text-Body-Default') || '#334155';
-    ctx.font = '600 13px Work Sans, sans-serif';
+    ctx.font = canvasFont('--Fonts-Body-Default-xxs');
     ctx.fillText(`r = ${formatDimensionLabel(r, units)}`, cx + rad * 0.38, cy - rad * 0.42);
   } else if (shapeKey === 'rightTriangle') {
     const a = values.legA;
@@ -840,7 +853,7 @@ function draw2D(ctx, canvas, shapeKey, values, rangesByKey = {}, units = DEFAULT
     ctx.restore();
 
     ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--Colors-Text-Body-Default') || '#334155';
-    ctx.font = '600 14px Work Sans, sans-serif';
+    ctx.font = canvasFont('--Fonts-Body-Default-xs');
     ctx.fillText(`a = ${formatDimensionLabel(a, units)}`, x0 + bx / 2 - 10, y0 + 18);
     ctx.fillText(`b = ${formatDimensionLabel(b, units)}`, x0 - 28, y0 - ay / 2);
   }
@@ -896,7 +909,7 @@ function draw3D(ctx, canvas, shapeKey, values, rangesByKey = {}, units = DEFAULT
     ctx.fill();
 
     ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--Colors-Text-Body-Default') || '#334155';
-    ctx.font = '12px Work Sans, sans-serif';
+    ctx.font = canvasFont('--Fonts-Special-sm', 400);
     ctx.fillText(`r=${formatDimensionLabel(r, units)}`, cx + rw / 2 + 6, cy);
     ctx.fillText(`h=${formatDimensionLabel(ht, units)}`, cx - rw / 2 - 28, cy);
   } else if (shapeKey === 'sphere') {
@@ -941,7 +954,7 @@ function draw3D(ctx, canvas, shapeKey, values, rangesByKey = {}, units = DEFAULT
     ctx.stroke();
 
     ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--Colors-Text-Body-Default') || '#334155';
-    ctx.font = '600 12px Work Sans, sans-serif';
+    ctx.font = canvasFont('--Fonts-Special-sm');
     ctx.fillText(`r=${formatDimensionLabel(r, units)}`, cx + rad * 0.32, cy + rad * 0.52);
   }
 }
@@ -1119,13 +1132,13 @@ async function initGeometryExplorer() {
       .map(
         (row) => `<li class="box emphasized non-interactive geometry-metric-row">
         <div class="geometry-metric-head">
-          <span class="geometry-metric-name body-xxsmall">${row.name}</span>
+          <span class="geometry-metric-name label-medium">${row.name}</span>
           <span class="geometry-metric-value">
-            <span class="geometry-metric-primary">${row.primary}</span>
-            ${row.alternate ? `<span class="geometry-metric-alt">${row.alternate}</span>` : ''}
+            <span class="geometry-metric-primary label-number-medium">${row.primary}</span>
+            ${row.alternate ? `<span class="geometry-metric-alt label-number-xsmall">${row.alternate}</span>` : ''}
           </span>
         </div>
-        ${showHints ? `<p class="geometry-metric-hint">${row.hint}</p>` : ''}
+        ${showHints ? `<p class="geometry-metric-hint body-xxsmall">${row.hint}</p>` : ''}
       </li>`,
       )
       .join('');
@@ -1187,7 +1200,7 @@ async function initGeometryExplorer() {
       const wrap = document.createElement('div');
       wrap.className = 'geometry-slider-block';
       const lab = document.createElement('span');
-      lab.className = 'geometry-control-label body-xsmall';
+      lab.className = 'geometry-control-label label-large';
       lab.textContent = paramLabelWithUnits(def.paramLabels[index], state.units);
       const mount = document.createElement('div');
       mount.id = `geom-slider-${key}`;
@@ -1304,12 +1317,30 @@ async function initGeometryExplorer() {
     ro.observe(frameEl);
   }
 
+  // Canvas text is painted with the design-system body font; preload it so the
+  // first render doesn't paint labels in a fallback font.
+  if (document.fonts?.load) {
+    try {
+      await Promise.all([
+        document.fonts.load('600 14px "Work Sans"'),
+        document.fonts.load('400 12px "Work Sans"'),
+      ]);
+    } catch (error) {
+      console.warn('Geometry Explorer: Work Sans preload failed; using fallback.', error);
+    }
+  }
+
   buildModeDropdown();
   buildUnitsDropdown();
   buildShapeDropdown();
   applyUiConfig();
   rebuildSliders();
   syncMetrics({ immediate: true });
+
+  // Repaint once any remaining web fonts settle (covers slow/async font loads).
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(() => syncMetrics({ publish: false }));
+  }
 }
 
 export { initGeometryExplorer };

@@ -122,12 +122,11 @@
   color: var(--Colors-Text-Body-Subtle);
 }
 
-/* Font size from .body-xxsmall; weight + color are app-specific. */
+/* Typography from .label-large; only layout + color are app-specific. */
 .bespoke .geometry-field-label {
   display: block;
   margin: 0 0 2px 0;
   color: var(--Colors-Text-Body-Stronger);
-  font-weight: 600;
 }
 
 .bespoke .geometry-field {
@@ -142,10 +141,9 @@
   margin-bottom: 0;
 }
 
-/* Font size from .body-xsmall; weight + color are app-specific. */
+/* Typography from .label-large; only layout + color are app-specific. */
 .bespoke .geometry-control-label {
   display: block;
-  font-weight: 600;
   color: var(--Colors-Text-Body-Stronger);
   margin-bottom: var(--UI-Spacing-spacing-xxs);
 }
@@ -180,14 +178,15 @@
   min-width: 0;
 }
 
-/* Font size from .body-xxsmall; weight + color are app-specific. */
+/* Typography from .label-medium; only layout + color are app-specific. */
 .bespoke .geometry-metric-name {
-  font-weight: 600;
   color: var(--Colors-Text-Body-Strongest);
   min-width: 0;
   flex-shrink: 1;
 }
 
+/* Child numbers carry .label-number-* typography; this is layout only.
+   tabular-nums keeps the figures aligned and is not provided by the class. */
 .bespoke .geometry-metric-value {
   display: flex;
   flex-direction: row;
@@ -195,42 +194,34 @@
   align-items: baseline;
   justify-content: flex-end;
   gap: var(--UI-Spacing-spacing-xxs);
-  font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
-  color: var(--Colors-Primary-Default);
-  font-weight: 700;
   text-align: right;
   flex-shrink: 1;
   min-width: 0;
-  line-height: 1.3;
 }
 
 .bespoke .geometry-metric-primary {
   color: var(--Colors-Primary-Default);
 }
 
+/* Typography from .label-number-xsmall; only color is app-specific. */
 .bespoke .geometry-metric-alt {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  line-height: 1.3;
   color: var(--Colors-Text-Body-Subtle);
 }
 
+/* Typography from .body-xxsmall; only layout + color are app-specific. */
 .bespoke .geometry-metric-hint {
   margin: var(--UI-Spacing-spacing-xxs) 0 0 0;
-  font-size: 0.6875rem;
-  line-height: 1.4;
   color: var(--Colors-Text-Body-Subtle);
 }
 
-/* Units note sits directly under the metric rows */
+/* Units note sits directly under the metric rows.
+   Typography from .body-xxsmall; only layout + color are app-specific. */
 .bespoke .geometry-units-note {
   margin-top: var(--UI-Spacing-spacing-xs);
   margin-bottom: 0;
   padding-top: var(--UI-Spacing-spacing-xxs);
   border-top: 1px dashed var(--Colors-Stroke-Default);
-  font-size: 0.6875rem;
-  line-height: 1.4;
   color: var(--Colors-Text-Body-Subtle);
 }
 
