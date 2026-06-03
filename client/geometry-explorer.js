@@ -174,6 +174,46 @@ function getLogicalCanvasSize(canvas) {
   };
 }
 
+function isValidTriangleSides(a, b, c) {
+  return a + b > c && a + c > b && b + c > a;
+}
+
+function triangleAreaFromSides(a, b, c) {
+  if (!isValidTriangleSides(a, b, c)) return 0;
+  const s = (a + b + c) / 2;
+  const radicand = s * (s - a) * (s - b) * (s - c);
+  return radicand > 0 ? Math.sqrt(radicand) : 0;
+}
+
+function triangleHeightOnBase(sideA, sideB, base) {
+  const x = (sideA * sideA + base * base - sideB * sideB) / (2 * base);
+  return Math.sqrt(Math.max(0, sideA * sideA - x * x));
+}
+
+function repairTriangleSides(values, rangesByKey) {
+  const step = rangesByKey.sideA?.step ?? 1;
+  let sideA = values.sideA;
+  let sideB = values.sideB;
+  let sideC = values.sideC;
+  const clampSide = (key, val, maxAllowed) => {
+    const ranges = rangesByKey[key];
+    const capped = Math.min(ranges.max, Math.max(ranges.min, Math.min(val, maxAllowed)));
+    return snapToStep(capped, ranges.min, ranges.step);
+  };
+
+  for (let attempt = 0; attempt < 24 && !isValidTriangleSides(sideA, sideB, sideC); attempt += 1) {
+    if (sideC >= sideA && sideC >= sideB) {
+      sideC = clampSide('sideC', sideC, sideA + sideB - step);
+    } else if (sideA >= sideB) {
+      sideA = clampSide('sideA', sideA, sideB + sideC - step);
+    } else {
+      sideB = clampSide('sideB', sideB, sideA + sideC - step);
+    }
+  }
+
+  return { sideA, sideB, sideC };
+}
+
 const SHAPES_2D = {
   rectangle: {
     label: 'Rectangle',
@@ -247,6 +287,32 @@ const SHAPES_2D = {
           hint: 'Sum of all three sides (includes hypotenuse)',
         },
         { name: 'Area', ...area, hint: 'A = ½ × a × b' },
+      ];
+    },
+  },
+  triangle: {
+    label: 'Triangle (3 sides)',
+    keys: ['sideA', 'sideB', 'sideC'],
+    paramLabels: ['Side a', 'Side b', 'Side c'],
+    ranges: { min: 1, max: 14, step: 1 },
+    defaults: { sideA: 5, sideB: 6, sideC: 7 },
+    compute(v) {
+      const { sideA: a, sideB: b, sideC: c } = v;
+      return {
+        perimeter: a + b + c,
+        area: triangleAreaFromSides(a, b, c),
+      };
+    },
+    metricRows(m, units) {
+      const perimeter = formatMeasurement(m.perimeter, 'linear', units);
+      const area = formatMeasurement(m.area, 'area', units);
+      return [
+        {
+          name: 'Perimeter',
+          ...perimeter,
+          hint: 'P = a + b + c (sum of all three sides)',
+        },
+        { name: 'Area', ...area, hint: "Heron's formula from three side lengths" },
       ];
     },
   },
@@ -449,7 +515,10 @@ function normalizeInitialState(config) {
       step: ranges.step,
     };
   });
-  const values = normalizeValues(def, initial.values, displayRanges);
+  let values = normalizeValues(def, initial.values, displayRanges);
+  if (shape === 'triangle') {
+    values = repairTriangleSides(values, displayRanges);
+  }
 
   return {
     mode: requestedMode,
@@ -839,6 +908,43 @@ function draw2D(ctx, canvas, shapeKey, values, rangesByKey = {}, units = DEFAULT
     ctx.font = canvasFont('--Fonts-Body-Default-xs');
     ctx.fillText(`a = ${formatDimensionLabel(a, units)}`, x0 + bx / 2 - 10, y0 + 18);
     ctx.fillText(`b = ${formatDimensionLabel(b, units)}`, x0 - 28, y0 - ay / 2);
+  } else if (shapeKey === 'triangle') {
+    const a = values.sideA;
+    const b = values.sideB;
+    const c = values.sideC;
+    const xFrac = (a * a + c * c - b * b) / (2 * c);
+    const height = triangleHeightOnBase(a, b, c);
+    const scale = Math.min(innerW / c, innerH / Math.max(height, 1)) * 0.85;
+    const basePx = c * scale;
+    const heightPx = height * scale;
+    const topOffsetPx = xFrac * scale;
+    const x0 = cx - basePx / 2;
+    const y0 = cy + heightPx / 2;
+    const v0 = { x: x0, y: y0 };
+    const v1 = { x: x0 + basePx, y: y0 };
+    const v2 = { x: x0 + topOffsetPx, y: y0 - heightPx };
+
+    ctx.beginPath();
+    ctx.moveTo(v0.x, v0.y);
+    ctx.lineTo(v1.x, v1.y);
+    ctx.lineTo(v2.x, v2.y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    const edgeLabel = (from, to, text, dx, dy) => {
+      ctx.fillText(
+        text,
+        (from.x + to.x) / 2 + dx,
+        (from.y + to.y) / 2 + dy,
+      );
+    };
+
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--Colors-Text-Body-Default') || '#334155';
+    ctx.font = canvasFont('--Fonts-Body-Default-xs');
+    edgeLabel(v0, v1, `c = ${formatDimensionLabel(c, units)}`, -12, 18);
+    edgeLabel(v0, v2, `a = ${formatDimensionLabel(a, units)}`, -34, 0);
+    edgeLabel(v1, v2, `b = ${formatDimensionLabel(b, units)}`, 18, 0);
   }
 }
 
@@ -981,6 +1087,15 @@ async function initGeometryExplorer() {
       }
       out[key] = snapped;
     });
+    if (getCurrentShapeKey(state) === 'triangle') {
+      const repaired = repairTriangleSides(out, rangesByKey);
+      def.keys.forEach((key, i) => {
+        if (out[key] !== repaired[key] && sliders[i]) {
+          sliders[i].setValue(repaired[key], null, false);
+        }
+        out[key] = repaired[key];
+      });
+    }
     return out;
   }
 
