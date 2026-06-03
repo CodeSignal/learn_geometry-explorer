@@ -291,7 +291,7 @@ const SHAPES_2D = {
     },
   },
   triangle: {
-    label: 'Triangle (3 sides)',
+    label: 'Triangle',
     keys: ['sideA', 'sideB', 'sideC'],
     paramLabels: ['Side a', 'Side b', 'Side c'],
     ranges: { min: 1, max: 14, step: 1 },
