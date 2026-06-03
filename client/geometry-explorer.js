@@ -191,22 +191,27 @@ function triangleHeightOnBase(sideA, sideB, base) {
 }
 
 function repairTriangleSides(values, rangesByKey) {
-  const step = rangesByKey.sideA?.step ?? 1;
   let sideA = values.sideA;
   let sideB = values.sideB;
   let sideC = values.sideC;
   const clampSide = (key, val, maxAllowed) => {
     const ranges = rangesByKey[key];
+    const step = ranges?.step ?? 1;
     const capped = Math.min(ranges.max, Math.max(ranges.min, Math.min(val, maxAllowed)));
-    return snapToStep(capped, ranges.min, ranges.step);
+    const snappedValue = snapToStep(capped, ranges.min, step);
+    const upperSnap = snapToStep(Math.min(maxAllowed, ranges.max), ranges.min, step);
+    return Math.min(snappedValue, upperSnap);
   };
 
   for (let attempt = 0; attempt < 24 && !isValidTriangleSides(sideA, sideB, sideC); attempt += 1) {
     if (sideC >= sideA && sideC >= sideB) {
+      const step = rangesByKey.sideC?.step ?? 1;
       sideC = clampSide('sideC', sideC, sideA + sideB - step);
     } else if (sideA >= sideB) {
+      const step = rangesByKey.sideA?.step ?? 1;
       sideA = clampSide('sideA', sideA, sideB + sideC - step);
     } else {
+      const step = rangesByKey.sideB?.step ?? 1;
       sideB = clampSide('sideB', sideB, sideA + sideC - step);
     }
   }
@@ -914,11 +919,14 @@ function draw2D(ctx, canvas, shapeKey, values, rangesByKey = {}, units = DEFAULT
     const c = values.sideC;
     const xFrac = (a * a + c * c - b * b) / (2 * c);
     const height = triangleHeightOnBase(a, b, c);
-    const scale = Math.min(innerW / c, innerH / Math.max(height, 1)) * 0.85;
+    const leftmost = Math.min(0, xFrac);
+    const rightmost = Math.max(c, xFrac);
+    const span = rightmost - leftmost;
+    const scale = Math.min(innerW / span, innerH / Math.max(height, 1)) * 0.85;
     const basePx = c * scale;
     const heightPx = height * scale;
     const topOffsetPx = xFrac * scale;
-    const x0 = cx - basePx / 2;
+    const x0 = cx - (span * scale) / 2 - leftmost * scale;
     const y0 = cy + heightPx / 2;
     const v0 = { x: x0, y: y0 };
     const v1 = { x: x0 + basePx, y: y0 };
