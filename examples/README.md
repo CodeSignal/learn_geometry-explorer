@@ -63,6 +63,7 @@ For `"2d"`:
 - `"rectangle"`
 - `"circle"`
 - `"rightTriangle"`
+- `"triangle"`
 
 For `"3d"`:
 
@@ -80,6 +81,7 @@ back to the selected shape's defaults. Out-of-range values are clamped.
 | `rectangle` | `width`, `height` | `1` to `16` |
 | `circle` | `radius` | `1` to `12` |
 | `rightTriangle` | `legA`, `legB` | `1` to `14` |
+| `triangle` | `sideA`, `sideB`, `sideC` | `1` to `14` |
 | `prism` | `length`, `width`, `height` | `1` to `12` |
 | `cylinder` | `radius`, `height` | `1` to `12` |
 | `sphere` | `radius` | `1` to `12` |
