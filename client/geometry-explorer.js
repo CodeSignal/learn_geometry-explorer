@@ -376,8 +376,8 @@ const SHAPES_3D = {
       };
     },
     metricRows(m, units) {
-      const surfaceArea = formatMeasurement(m.surfaceArea, 'area', units);
-      const volume = formatMeasurement(m.volume, 'volume', units);
+      const surfaceArea = formatMeasurement(m.surfaceArea, 'area', units, CIRCLE_METRIC_FORMAT);
+      const volume = formatMeasurement(m.volume, 'volume', units, CIRCLE_METRIC_FORMAT);
       return [
         {
           name: 'Surface area',
@@ -402,8 +402,8 @@ const SHAPES_3D = {
       };
     },
     metricRows(m, units) {
-      const surfaceArea = formatMeasurement(m.surfaceArea, 'area', units);
-      const volume = formatMeasurement(m.volume, 'volume', units);
+      const surfaceArea = formatMeasurement(m.surfaceArea, 'area', units, CIRCLE_METRIC_FORMAT);
+      const volume = formatMeasurement(m.volume, 'volume', units, CIRCLE_METRIC_FORMAT);
       return [
         {
           name: 'Surface area',
