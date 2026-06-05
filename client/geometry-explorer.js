@@ -99,9 +99,9 @@ function convertLength(value, fromUnits, toUnits) {
   return convertBetweenUnits(value, fromUnits, toUnits, 'linear');
 }
 
-function formatMeasurement(value, unitKey, units) {
+function formatMeasurement(value, unitKey, units, numberFormat = {}) {
   const labels = getUnitLabels(units);
-  const primary = `${formatNumber(value)} ${labels[unitKey]}`;
+  const primary = `${formatNumber(value, numberFormat)} ${labels[unitKey]}`;
   const alternateUnits = getAlternateUnits(units);
   if (!alternateUnits) {
     return { primary, alternate: null };
@@ -110,7 +110,7 @@ function formatMeasurement(value, unitKey, units) {
   const altLabels = getUnitLabels(alternateUnits);
   return {
     primary,
-    alternate: `≈ ${formatNumber(altValue)} ${altLabels[unitKey]}`,
+    alternate: `≈ ${formatNumber(altValue, numberFormat)} ${altLabels[unitKey]}`,
   };
 }
 
@@ -154,15 +154,25 @@ function paramLabelWithUnits(label, units) {
   return `${label} (${getUnitLabels(normalized).linear})`;
 }
 
-function formatNumber(n) {
+function formatNumber(n, { minimumFractionDigits, maximumFractionDigits } = {}) {
   if (!Number.isFinite(n)) return '—';
-  const abs = Math.abs(n);
-  const decimals = abs >= 100 ? 0 : abs >= 10 ? 1 : 2;
+  let maxDecimals = maximumFractionDigits;
+  if (maxDecimals === undefined) {
+    const abs = Math.abs(n);
+    maxDecimals = abs >= 100 ? 0 : abs >= 10 ? 1 : 2;
+  }
+  const minDecimals = minimumFractionDigits ?? 0;
   return n.toLocaleString(undefined, {
-    maximumFractionDigits: decimals,
-    minimumFractionDigits: 0,
+    maximumFractionDigits: maxDecimals,
+    minimumFractionDigits: minDecimals,
   });
 }
+
+/** π-derived circle metrics: show hundredths. */
+const CIRCLE_METRIC_FORMAT = {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+};
 
 /** CSS-pixel size; context is scaled by devicePixelRatio so we must not use raw canvas.width. */
 function getLogicalCanvasSize(canvas) {
@@ -256,8 +266,8 @@ const SHAPES_2D = {
       };
     },
     metricRows(m, units) {
-      const perimeter = formatMeasurement(m.perimeter, 'linear', units);
-      const area = formatMeasurement(m.area, 'area', units);
+      const perimeter = formatMeasurement(m.perimeter, 'linear', units, CIRCLE_METRIC_FORMAT);
+      const area = formatMeasurement(m.area, 'area', units, CIRCLE_METRIC_FORMAT);
       return [
         {
           name: 'Circumference',
@@ -366,8 +376,8 @@ const SHAPES_3D = {
       };
     },
     metricRows(m, units) {
-      const surfaceArea = formatMeasurement(m.surfaceArea, 'area', units);
-      const volume = formatMeasurement(m.volume, 'volume', units);
+      const surfaceArea = formatMeasurement(m.surfaceArea, 'area', units, CIRCLE_METRIC_FORMAT);
+      const volume = formatMeasurement(m.volume, 'volume', units, CIRCLE_METRIC_FORMAT);
       return [
         {
           name: 'Surface area',
@@ -392,8 +402,8 @@ const SHAPES_3D = {
       };
     },
     metricRows(m, units) {
-      const surfaceArea = formatMeasurement(m.surfaceArea, 'area', units);
-      const volume = formatMeasurement(m.volume, 'volume', units);
+      const surfaceArea = formatMeasurement(m.surfaceArea, 'area', units, CIRCLE_METRIC_FORMAT);
+      const volume = formatMeasurement(m.volume, 'volume', units, CIRCLE_METRIC_FORMAT);
       return [
         {
           name: 'Surface area',
