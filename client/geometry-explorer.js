@@ -985,40 +985,80 @@ function draw3D(ctx, canvas, shapeKey, values, rangesByKey = {}, units = DEFAULT
     return;
   } else if (shapeKey === 'cylinder') {
     const { radius: r, height: ht } = values;
-    const maxDim = Math.max(r * 2, ht);
-    const s = (Math.min(w, h) * 0.35) / maxDim;
-    const rw = r * s * 2;
-    const hh = ht * s;
-    const topY = cy - hh / 2;
-    const botY = cy + hh / 2;
+    const rMax = rangesByKey.radius?.max ?? SHAPES_3D.cylinder.ranges.max;
+    const hMax = rangesByKey.height?.max ?? SHAPES_3D.cylinder.ranges.max;
+    const dimPad = 48;
+    const labelPadLeft = 72;
+    const labelPadTop = 22;
+    const innerW = w - dimPad - labelPadLeft - dimPad;
+    const innerH = h - dimPad - labelPadTop - dimPad;
+    const ellipseRyFactor = 0.22;
+    const refDiameter = rMax * 2;
+    const refTotalH = hMax + refDiameter * ellipseRyFactor * 2;
+    const scale = Math.min(innerW / refDiameter, innerH / refTotalH) * 0.85;
+    const rw = r * 2 * scale;
+    const hh = ht * scale;
+    const cylCx = dimPad + labelPadLeft + innerW / 2;
+    const cylCy = dimPad + labelPadTop + innerH / 2;
+    const topY = cylCy - hh / 2;
+    const botY = cylCy + hh / 2;
 
     ctx.strokeStyle = stroke;
     ctx.fillStyle = 'rgba(37, 99, 235, 0.1)';
     ctx.beginPath();
-    ctx.ellipse(cx, topY, rw / 2, rw * 0.22, 0, 0, Math.PI * 2);
+    ctx.ellipse(cylCx, topY, rw / 2, rw * ellipseRyFactor, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = 'rgba(37, 99, 235, 0.06)';
     ctx.beginPath();
-    ctx.moveTo(cx - rw / 2, topY);
-    ctx.lineTo(cx - rw / 2, botY);
-    ctx.lineTo(cx + rw / 2, botY);
-    ctx.lineTo(cx + rw / 2, topY);
+    ctx.moveTo(cylCx - rw / 2, topY);
+    ctx.lineTo(cylCx - rw / 2, botY);
+    ctx.lineTo(cylCx + rw / 2, botY);
+    ctx.lineTo(cylCx + rw / 2, topY);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.ellipse(cx, botY, rw / 2, rw * 0.22, 0, 0, Math.PI * 2);
+    ctx.ellipse(cylCx, botY, rw / 2, rw * ellipseRyFactor, 0, 0, Math.PI * 2);
     ctx.stroke();
     ctx.fillStyle = 'rgba(37, 99, 235, 0.12)';
     ctx.fill();
 
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--Colors-Text-Body-Default') || '#334155';
+    const labelColor =
+      getComputedStyle(document.documentElement).getPropertyValue('--Colors-Text-Body-Default') || '#334155';
+    ctx.fillStyle = labelColor.trim() || '#334155';
     ctx.font = canvasFont('--Fonts-Special-sm', 400);
-    ctx.fillText(`r=${formatDimensionLabel(r, units)}`, cx + rw / 2 + 6, cy);
-    ctx.fillText(`h=${formatDimensionLabel(ht, units)}`, cx - rw / 2 - 28, cy);
+    ctx.strokeStyle = stroke;
+
+    const topRadiusMidX = cylCx + rw / 4;
+    ctx.beginPath();
+    ctx.moveTo(cylCx, topY);
+    ctx.lineTo(cylCx + rw / 2, topY);
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(`r=${formatDimensionLabel(r, units)}`, topRadiusMidX, topY - 6);
+
+    const hDimX = cylCx - rw / 2 - 22;
+    const hTick = 4;
+    ctx.beginPath();
+    ctx.moveTo(hDimX, topY);
+    ctx.lineTo(hDimX, botY);
+    ctx.moveTo(hDimX - hTick, topY);
+    ctx.lineTo(hDimX + hTick, topY);
+    ctx.moveTo(hDimX - hTick, botY);
+    ctx.lineTo(hDimX + hTick, botY);
+    ctx.stroke();
+
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`h=${formatDimensionLabel(ht, units)}`, hDimX - 8, cylCy);
+
+    ctx.textAlign = 'start';
+    ctx.textBaseline = 'alphabetic';
   } else if (shapeKey === 'sphere') {
     const r = values.radius;
     const rMax = rangesByKey.radius?.max ?? SHAPES_3D.sphere.ranges.max;
